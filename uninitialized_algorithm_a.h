@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
-#include <iterator>
+#include <type_traits>
+#include <utility>
 namespace Yc
 {
     template<class ForwardIt, class Alloc>
@@ -35,10 +36,7 @@ namespace Yc
         }
         catch (...)
         {
-            for (; d_first != current; ++d_first)
-            {
-                std::allocator_traits<Alloc>::destroy(a, std::addressof(*d_first));
-            }
+            destroy_a(d_first, current, a);
             throw;
         }
     }
@@ -53,16 +51,13 @@ namespace Yc
             {
                 std::allocator_traits<Alloc>::construct(a, std::addressof(*current), *first);
             }
+            return current;
         }
         catch (...)
         {
-            for (; d_first != current; ++d_first)
-            {
-                std::allocator_traits<Alloc>::destroy(a, std::addressof(*d_first));
-            }
+            destroy_a(d_first, current, a);
             throw;
         }
-        return current;
     }
     template<class NoThrowForwardIt, class T, class Alloc>
     void uninitialized_fill_a(NoThrowForwardIt first, NoThrowForwardIt last, const T& value, Alloc& a)
@@ -77,16 +72,13 @@ namespace Yc
         }
         catch (...)
         {
-            for (; first != current; ++first)
-            {
-                std::allocator_traits<Alloc>::destroy(a, std::addressof(*first));
-            }
+            destroy_a(first, current, a);
             throw;
         }
     }
     template<class NoThrowForwardIt, class Size, class T, class Alloc>
     NoThrowForwardIt uninitialized_fill_n_a(NoThrowForwardIt first,
-        Size count, const T& value)
+        Size count, const T& value, Alloc& a)
     {
         NoThrowForwardIt current = first;
         try
@@ -99,10 +91,7 @@ namespace Yc
         }
         catch (...)
         {
-            for (; first != current; ++first)
-            {
-                std::allocator_traits<Alloc>::destroy(a, std::addressof(*first));
-            }
+            destroy_a(first, current, a);
             throw;
         }
     }
@@ -129,12 +118,12 @@ namespace Yc
         }
         catch (...)
         {
-            std::destroy_a(d_first, current, a);
+            destroy_a(d_first, current, a);
             throw;
         }
     }
     template<class InputIt, class Size, class NoThrowForwardIt, class Alloc>
-    std::pair<InputIt, NoThrowForwardIt>uninitialized_move_n_a(InputIt first, Size count, NoThrowForwardIt d_first, Alloc& a)
+    std::pair<InputIt, NoThrowForwardIt> uninitialized_move_n_a(InputIt first, Size count, NoThrowForwardIt d_first, Alloc& a)
     {
         NoThrowForwardIt current = d_first;
         try
@@ -150,13 +139,13 @@ namespace Yc
                     std::allocator_traits<Alloc>::construct(a, addr, *first);
                 }
             }
+            return { first, current };
         }
         catch (...)
         {
-            std::destroy_a(d_first, current, a);
+            destroy_a(d_first, current, a);
             throw;
         }
-        return { first, current };
     }
 
     template<class NoThrowForwardIt, class Alloc>
@@ -172,7 +161,7 @@ namespace Yc
         }
         catch (...)
         {
-            std::destroy_a(first, current, a);
+            destroy_a(first, current, a);
             throw;
         }
     }
@@ -183,15 +172,14 @@ namespace Yc
         NoThrowForwardIt current = first;
         try
         {
-            for (; countn > 0; (void) ++current, --count)
+            for (; count > 0; (void) ++current, --count)
                 std::allocator_traits<Alloc>::construct(a, std::addressof(*current));
             return current;
         }
         catch (...)
         {
-            std::destroy_a(first, current, a);
+            destroy_a(first, current, a);
             throw;
         }
     }
-
 }
