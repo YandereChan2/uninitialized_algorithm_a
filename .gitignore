@@ -1,0 +1,11 @@
+﻿# 编译产物
+*.obj
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.lib
+
+# 构建目录
+build/
+out/
